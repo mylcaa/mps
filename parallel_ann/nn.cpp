@@ -54,9 +54,8 @@ bool NeuralNetwork::feedForword(vector<float> input){
             temp = temp.applyFunction(Exp);
 
             float sum = temp.sumElements();
-            neuronMatrix = temp.applyFunction([sum](static float &val){
-                return val/sum;
-            });
+            sum = 1/sum;
+            neuronMatrix = temp.multiplyScaler(sum);
         }
         else{
             neuronMatrix = _weightMatrix[i].multiply(neuronMatrix);
@@ -77,22 +76,32 @@ bool NeuralNetwork::backPropagate(vector<float> targetOutput){
 
     // determine the simple error
     // error = target - output
+    cout << "target output size: " << targetOutput.size() << endl;
     Matrix<float> errors(targetOutput.size(), 1);
     errors._vals = targetOutput;
-    errors = errors.add(_valueMatrix.back().negative());
+
+    Matrix<float> neuronMatrix = _neuronMatrix.back();
+    neuronMatrix = neuronMatrix.negative();
+    cout << "neuronMatrix size: " << neuronMatrix._cols << " " << neuronMatrix._rows << endl;
+    cout << "neuronMatrix size from origigi: " << _neuronMatrix.front()._cols << " " << _neuronMatrix.front()._rows << endl;
+
+    errors = errors.add(neuronMatrix);
+
+    cout << "10" << endl;
 
     // back propagating the error from output layer to input layer
     // and adjusting weights of weight matrices and bias matrics
     for(int i = _weightMatrix.size() - 1; i >= 0; i--){
         //calculating errrors for previous layer
-        Matrix<float> prevErrors = errors.multiply(_weightMatrix[i].transpose());
+        Matrix<float> weightMatrix = _weightMatrix[i].transpose();
+        Matrix<float> prevErrors = errors.multiply(weightMatrix);
 
         //calculating gradient i.e. delta weight (dw)
         //dw = lr * error * d/dx(activated value)
-        Matrix<float> dOutputs = _valueMatrix[i + 1].applyFunction(DReLU);
+        Matrix<float> dOutputs = _neuronMatrix[i + 1].applyFunction(DReLU);
         Matrix<float> gradients = errors.multiplyElements(dOutputs);
         gradients = gradients.multiplyScaler(_learningRate);
-        Matrix<float> weightGradients = _valueMatrix[i].transpose().multiply(gradients);
+        Matrix<float> weightGradients = _neuronMatrix[i].transpose().multiply(gradients);
         
         //adjusting bias and weight
         _biasMatrix[i] = _biasMatrix[i].add(gradients);
@@ -103,6 +112,6 @@ bool NeuralNetwork::backPropagate(vector<float> targetOutput){
 }
 
 // function to retrive final output
-vector<float> getPredictions(){
-    return _valueMatrices.back()._vals;
+vector<float> NeuralNetwork::getPredictions(){
+    return _neuronMatrix.back()._vals;
 }

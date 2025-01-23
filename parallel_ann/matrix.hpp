@@ -1,4 +1,3 @@
-#pragma once
 #include <vector>
 #include <iostream>
 #include <iomanip>
@@ -7,24 +6,21 @@
 
 using namespace std;
 
-
-namespace sp
-{
     template<typename T>class Matrix
     {
     public:
-        uint32_t _cols;
-        uint32_t _rows;
+        int _cols;
+        int _rows;
         vector<T> _vals;
 
 
     public:
-        Matrix(uint32_t cols, uint32_t rows)
+        Matrix(int cols, int rows)
             : _cols(cols),
             _rows(rows),
             _vals({})
         {
-            vals.resize(rows * cols, T());
+            _vals.resize(rows * cols, T());
         }
 
         Matrix()
@@ -34,7 +30,7 @@ namespace sp
         {
         }
 
-        T& at(uint32_t col, uint32_t row)
+        T& at(int col, int row)
         {
             return _vals[row * _cols + col];
         }
@@ -48,8 +44,8 @@ namespace sp
         Matrix negative()
         {
             Matrix output(_cols, _rows);
-            for (uint32_t y = 0; y < output._rows; y++)
-                for (uint32_t x = 0; x < output._cols; x++)
+            for (int y = 0; y < output._rows; y++)
+                for (int x = 0; x < output._cols; x++)
                 {
                     output.at(x, y) = -at(x, y);
                 }
@@ -61,11 +57,11 @@ namespace sp
         {
             assert(_cols == target._rows);
             Matrix output(target._cols, _rows);
-            for (uint32_t y = 0; y < output._rows; y++)
-                for (uint32_t x = 0; x < output._cols; x++)
+            for (int y = 0; y < output._rows; y++)
+                for (int x = 0; x < output._cols; x++)
                 {
                     T result = T();
-                    for (uint32_t k = 0; k < _cols; k++)
+                    for (int k = 0; k < _cols; k++)
                         result += at(k, y) * target.at(x, k);
                     output.at(x, y) = result;
                 }
@@ -76,8 +72,8 @@ namespace sp
         {
             assert(_rows == target._rows && _cols == target._cols);
             Matrix output(_cols, _rows);
-            for (uint32_t y = 0; y < output._rows; y++)
-                for (uint32_t x = 0; x < output._cols; x++)
+            for (int y = 0; y < output._rows; y++)
+                for (int x = 0; x < output._cols; x++)
                 {
                     output.at(x, y) = at(x, y) * target.at(x, y);
                 }
@@ -87,8 +83,8 @@ namespace sp
         float sumElements()
         {
             float sum = 0;
-            for (uint32_t y = 0; y < output._rows; y++)
-                for (uint32_t x = 0; x < output._cols; x++)
+            for (int y = 0; y < _rows; y++)
+                for (int x = 0; x < _cols; x++)
                 {
                     sum += at(x, y);
                 }
@@ -99,9 +95,9 @@ namespace sp
         Matrix add(Matrix& target)
         {
             assert(_rows == target._rows && _cols == target._cols);
-            Matrix2D output(_cols, _rows);
-            for (uint32_t y = 0; y < output._rows; y++)
-                for (uint32_t x = 0; x < output._cols; x++)
+            Matrix output(_cols, _rows);
+            for (int y = 0; y < output._rows; y++)
+                for (int x = 0; x < output._cols; x++)
                 {
                     output.at(x, y) = at(x, y) + target.at(x, y);
                 }
@@ -112,8 +108,8 @@ namespace sp
         Matrix applyFunction(function<T(const T&)> func)
         {
             Matrix output(_cols, _rows);
-            for (uint32_t y = 0; y < output._rows; y++)
-                for (uint32_t x = 0; x < output._cols; x++)
+            for (int y = 0; y < output._rows; y++)
+                for (int x = 0; x < output._cols; x++)
                 {
                     output.at(x, y) = func(at(x, y));
                 }
@@ -123,8 +119,8 @@ namespace sp
         Matrix multiplyScaler(float s)
         {
             Matrix output(_cols, _rows);
-            for (uint32_t y = 0; y < output._rows; y++)
-                for (uint32_t x = 0; x < output._cols; x++)
+            for (int y = 0; y < output._rows; y++)
+                for (int x = 0; x < output._cols; x++)
                 {
                     output.at(x, y) = at(x, y) * s;
                 }
@@ -135,8 +131,8 @@ namespace sp
         Matrix addScaler(float s)
         {
             Matrix output(_cols, _rows);
-            for (uint32_t y = 0; y < output._rows; y++)
-                for (uint32_t x = 0; x < output._cols; x++)
+            for (int y = 0; y < output._rows; y++)
+                for (int x = 0; x < output._cols; x++)
                 {
                     output.at(x, y) = at(x, y) + s;
                 }
@@ -146,20 +142,20 @@ namespace sp
         Matrix transpose()
         {
             Matrix output(_rows, _cols);
-            for (uint32_t y = 0; y < _rows; y++)
-                for (uint32_t x = 0; x < _cols; x++)
+            for (int y = 0; y < _rows; y++)
+                for (int x = 0; x < _cols; x++)
                 {
                     output.at(y, x) = at(x, y);
                 }
             return output;
         }
 
-        Matrix cofactor(uint32_t col, uint32_t row)
+        Matrix cofactor(int col, int row)
         {
             Matrix output(_cols - 1, _rows - 1);
-            uint32_t i = 0;
-            for (uint32_t y = 0; y < _rows; y++)
-                for (uint32_t x = 0; x < _cols; x++)
+            int i = 0;
+            for (int y = 0; y < _rows; y++)
+                for (int x = 0; x < _cols; x++)
                 {
                     if (x == col || y == row) continue;
                     output._vals[i++] = at(x, y);
@@ -179,7 +175,7 @@ namespace sp
             else
             {
                 int32_t sign = 1;
-                for (uint32_t x = 0; x < _cols; x++)
+                for (int x = 0; x < _cols; x++)
                 {
                     output += sign * at(x, 0) * cofactor(x, 0).determinant();
                     sign *= -1;
@@ -194,8 +190,8 @@ namespace sp
             assert(_rows == _cols);
             Matrix output(_cols, _rows);
             int32_t sign = 1;
-            for (uint32_t y = 0; y < _rows; y++)
-                for (uint32_t x = 0; x < _cols; x++)
+            for (int y = 0; y < _rows; y++)
+                for (int x = 0; x < _cols; x++)
                 {
                     output.at(x, y) = sign * cofactor(x, y).determinant();
                     sign *= -1;
@@ -209,8 +205,8 @@ namespace sp
         {
             Matrix adj = adjoint();
             T factor = determinant();
-            for (uint32_t y = 0; y < adj._cols; y++)
-                for (uint32_t x = 0; x < adj._rows; x++)
+            for (int y = 0; y < adj._cols; y++)
+                for (int x = 0; x < adj._rows; x++)
                 {
                     adj.at(x, y) = adj.at(x, y) / factor;
                 }
@@ -223,12 +219,11 @@ namespace sp
 
     template<typename T> void LogMatrix(Matrix<T>& mat)
     {
-        for (uint32_t y = 0; y < mat._rows; y++)
+        for (int y = 0; y < mat._rows; y++)
         {
-            for (uint32_t x = 0; x < mat._cols; x++)
+            for (int x = 0; x < mat._cols; x++)
                 cout << setw(10) << mat.at(x, y) << " ";
             cout << endl;
         }
     }
 
-}

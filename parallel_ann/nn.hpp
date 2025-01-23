@@ -1,6 +1,7 @@
 #include <iostream>
-#include <vector.h>
-#include <matrix.hpp>
+#include <vector>
+#include <math.h>
+#include "matrix.hpp"
 
 using namespace std;
 
@@ -15,14 +16,14 @@ class NeuralNetwork
 
     public:
         //initializing net with random values
-        NeuralNetwork(vector<int> topology);
+        NeuralNetwork(vector<int> topology, float learningRate);
         // function to generate output from given input vector
         bool feedForword(vector<float> input);
         // function to train with given output vector
         bool backPropagate(vector<float> targetOutput);
         // function to retrive final output
         vector<float> getPredictions();
-}
+};
 
 //ReLU activation function - Rectified Linear Unit
 inline float ReLU(float val){
