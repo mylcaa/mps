@@ -10,6 +10,7 @@ class NeuralNetwork
     public:
         vector<int> _topology;
         vector<Matrix<float>> _neuronMatrix;
+        vector<Matrix<float>> _unactivatedMatrix;
         vector<Matrix<float>> _biasMatrix;
         vector<Matrix<float>> _weightMatrix;
         float _learningRate;
@@ -23,6 +24,8 @@ class NeuralNetwork
         bool backPropagate(vector<float> targetOutput);
         // function to retrive final output
         vector<float> getPredictions();
+        // write down weights and biases of a trained neural network
+        void print(const char *bias_file, const char *weight_file);
 };
 
 //ReLU activation function - Rectified Linear Unit

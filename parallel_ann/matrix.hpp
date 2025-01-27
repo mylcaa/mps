@@ -91,7 +91,6 @@ using namespace std;
             return sum;
         }
 
-
         Matrix add(Matrix& target)
         {
             assert(_rows == target._rows && _cols == target._cols);
