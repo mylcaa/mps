@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <cassert>
 #include <functional>
+#include <math.h>
 
 using namespace std;
 
@@ -91,6 +92,88 @@ using namespace std;
             return sum;
         }
 
+        float max()
+        {
+            float max = at(0,0);
+            for (int y = 0; y < _rows; y++)
+                for (int x = 0; x < _cols; x++)
+                {
+                    max = ((max <= at(x, y))? at(x, y) : max);
+                }
+            return max;
+        }
+
+        Matrix logSoftmax(){
+    
+            float max = this -> max();
+
+            cout << "max: " << max << endl;
+
+            Matrix<float> targetMatrix = this -> addScaler(-max);
+
+            cout << "unactivated after normalisation:" << endl;
+            targetMatrix.print();
+
+            targetMatrix = targetMatrix.applyFunction([](const float &val){
+                        return exp(val);
+                    });
+
+            cout << "output after exp:" << endl;
+            targetMatrix.print();
+
+            float sum = targetMatrix.sumElements();
+            sum = log(sum);
+
+            targetMatrix = targetMatrix.addScaler(-sum);
+
+            cout << "output after sum:" << endl;
+            targetMatrix.print();
+
+            targetMatrix = targetMatrix.addScaler(-max);
+
+            cout << "output after logsoftmax:" << endl;
+            targetMatrix.print();
+
+            return targetMatrix;
+        }
+
+        Matrix Softmax(){
+            
+            Matrix targetMatrix(_cols, _rows);
+            for (int Y = 0; Y < _rows; Y++){
+                for (int X = 0; X < _cols; X++){
+
+                    Matrix output(_cols, _rows);
+                    float target = at(X, Y);
+
+                    for (int y = 0; y < output._rows; y++){
+                        for (int x = 0; x < output._cols; x++){
+                            output.at(x, y) = at(x, y) - target;
+                        }
+                    }
+                    
+                    output = output.applyFunction([](const float &val){
+                                return exp(val);
+                            });
+
+                    float sum = output.sumElements();
+                    targetMatrix.at(X, Y) = 1/sum;
+                }
+            }
+    
+            return targetMatrix;
+        }
+
+        void print(){
+            for (int y = 0; y < _rows; y++){
+                for (int x = 0; x < _cols; x++)
+                {
+                    printf("%f ", at(x, y));
+                }
+                printf("\n");
+            }
+        }
+
         Matrix add(Matrix& target)
         {
             assert(_rows == target._rows && _cols == target._cols);
@@ -99,6 +182,25 @@ using namespace std;
                 for (int x = 0; x < output._cols; x++)
                 {
                     output.at(x, y) = at(x, y) + target.at(x, y);
+                }
+            return output;
+        }
+
+        Matrix addLimited(Matrix& target)
+        {
+            assert(_rows == target._rows && _cols == target._cols);
+            Matrix output(_cols, _rows);
+            for (int y = 0; y < output._rows; y++)
+                for (int x = 0; x < output._cols; x++)
+                {
+                    output.at(x, y) = at(x, y) + target.at(x, y);
+                    
+                    if(output.at(x, y) > 1)
+                        output.at(x, y) = 1;
+
+
+                    if(output.at(x, y) < 0)
+                        output.at(x, y) = 0;
                 }
             return output;
         }
@@ -225,4 +327,6 @@ using namespace std;
             cout << endl;
         }
     }
+
+
 

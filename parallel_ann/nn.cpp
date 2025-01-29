@@ -34,6 +34,43 @@ NeuralNetwork::NeuralNetwork(vector<int> topology, float learningRate):
             _unactivatedMatrix.resize(topology.size());
         }
 
+//constructor initializes the neural network with random values for weights and biases [0, 1]
+NeuralNetwork::NeuralNetwork(vector<int> topology, float learningRate, const char *bias_file, const char *weight_file):
+        _topology(topology),
+        _neuronMatrix({}),
+        _unactivatedMatrix({}),
+        _biasMatrix({}),
+        _weightMatrix({}),
+        _learningRate(learningRate)
+        {
+            FILE *fp_bias = fopen(bias_file, "r");
+            FILE *fp_weight = fopen(weight_file, "r");
+
+            for(int i=1; i < topology.size(); ++i){
+                
+                Matrix<float> weightMatrix(topology[i], topology[i-1]);
+                weightMatrix = weightMatrix.applyFunction([fp_weight](const float &val){
+                        float temp;
+                        fscanf(fp_weight, "%f ", &temp);
+                        return temp;
+                    });
+                _weightMatrix.push_back(weightMatrix);
+
+                Matrix<float> biasMatrix(topology[i], 1);
+                biasMatrix = biasMatrix.applyFunction([fp_bias](const float &val){
+                        float temp;
+                        fscanf(fp_bias, "%f ", &temp);
+                        return temp;
+                    });
+                _biasMatrix.push_back(biasMatrix);
+            }
+
+            fclose(fp_bias);
+            fclose(fp_weight);
+            _neuronMatrix.resize(topology.size());
+            _unactivatedMatrix.resize(topology.size());
+        }
+
 // function to generate output from given input vector
 bool NeuralNetwork::feedForword(vector<float> input){
     
@@ -48,28 +85,52 @@ bool NeuralNetwork::feedForword(vector<float> input){
 
     Matrix<float> UnactivatedMatrix = neuronMatrix;
 
+    /*cout << "input:" << endl;
+    neuronMatrix.print();*/
+
     for(int i=0; i < _weightMatrix.size(); ++i){
         _neuronMatrix.at(i) = neuronMatrix;
         _unactivatedMatrix.at(i) = UnactivatedMatrix;
        
         //z = W*a + b
+        
         UnactivatedMatrix = neuronMatrix.multiply(_weightMatrix[i]);
+
+        /*cout << "W*a: " << i << endl;
+        UnactivatedMatrix.print();*/
+
         UnactivatedMatrix = UnactivatedMatrix.add(_biasMatrix[i]);
+
+        /*cout << "W*a + b : " << i << endl;
+        UnactivatedMatrix.print();*/
 
         //a' = activation_function(z)
         if(i == (_weightMatrix.size() - 1)){
 
-            neuronMatrix = UnactivatedMatrix.applyFunction(Exp);
-            float sum = neuronMatrix.sumElements();
-            sum = 1/sum;
-            neuronMatrix = neuronMatrix.multiplyScaler(sum);
+            neuronMatrix = UnactivatedMatrix.Softmax();
+            
+            /*cout << "output:" << endl;
+            neuronMatrix.print();*/
         }
         else{
             //cout << "neuronMatrix: " << neuronMatrix._rows << " " << neuronMatrix._cols << endl;
             //cout << "_weightMatrix[i]: " << i << " " << _weightMatrix[i]._rows << " " << _weightMatrix[i]._cols << endl;
             neuronMatrix = UnactivatedMatrix.applyFunction(ReLU);
+
+            /*cout << "layer:" << endl;
+            neuronMatrix.print();*/
         }
+
+        //normalise layers
+        float max = neuronMatrix.max();
+        //cout << "max: " << max << endl;
+        if(max > 1)
+            neuronMatrix = neuronMatrix.multiplyScaler(1/max);
+
+        /*cout << "layer norm: " << i << endl;
+        neuronMatrix.print();*/
     }
+    
     _neuronMatrix.at(_weightMatrix.size()) = neuronMatrix;
     _unactivatedMatrix.at(_weightMatrix.size()) = UnactivatedMatrix;
 
@@ -90,6 +151,7 @@ bool NeuralNetwork::backPropagate(vector<float> targetOutput){
 
     Matrix<float> neuronMatrix = _neuronMatrix.back();
     neuronMatrix = neuronMatrix.negative();
+
     errors = errors.add(neuronMatrix);
 
     // back propagating the error from output layer to input layer
@@ -111,10 +173,27 @@ bool NeuralNetwork::backPropagate(vector<float> targetOutput){
 
         Matrix<float> gradients = errors.multiplyScaler(_learningRate);
         Matrix<float> weightGradients = _neuronMatrix[i].transpose().multiply(gradients);
-        
+
         //adjusting bias and weight
-        _biasMatrix[i] = _biasMatrix[i].add(gradients);
-        _weightMatrix[i] = _weightMatrix[i].add(weightGradients);
+
+        /*cout << "bias: " << i << endl;
+        _biasMatrix[i].print();
+
+        cout << "bias gradient:" << endl;
+        gradients.print();*/
+
+        _biasMatrix[i] = _biasMatrix[i].addLimited(gradients);
+
+        /*cout << "changed bias: " << i << endl;
+        _biasMatrix[i].print();
+
+        cout << "weights: " << i << endl;
+        _weightMatrix[i].print();*/
+
+        /*cout << "weight gradient:" << endl;
+        weightGradients.print();*/
+
+        _weightMatrix[i] = _weightMatrix[i].addLimited(weightGradients);
         errors = prevErrors;
     }
     return true;

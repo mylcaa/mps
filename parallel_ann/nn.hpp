@@ -18,6 +18,8 @@ class NeuralNetwork
     public:
         //initializing net with random values
         NeuralNetwork(vector<int> topology, float learningRate);
+        //initializing net with trained values
+        NeuralNetwork(vector<int> topology, float learningRate, const char *bias_file, const char *weight_file);
         // function to generate output from given input vector
         bool feedForword(vector<float> input);
         // function to train with given output vector
@@ -26,6 +28,7 @@ class NeuralNetwork
         vector<float> getPredictions();
         // write down weights and biases of a trained neural network
         void print(const char *bias_file, const char *weight_file);
+
 };
 
 //ReLU activation function - Rectified Linear Unit
@@ -36,9 +39,4 @@ inline float ReLU(float val){
 //Derivative ReLU 
 inline float DReLU(float val){
     return ((val <= 0)? 0 : 1);
-}
-
-//Softmax activation function helper
-inline float Exp(float val){
-    return exp(val);
 }
