@@ -6,8 +6,8 @@
 
 using namespace std;
 
-NeuralNetwork train(vector<int>);
-void test(vector<int>);
+void train(vector<int>, const char *, const char *);
+void test(vector<int>, const char *, const char *);
 int findLabel(vector<float>);
 int findLabelOutput(vector<float>);
 
@@ -18,44 +18,36 @@ int main(int argc, char* argv[])
     //create topology of neural network
     int numLayers;
     int num;
-    printf("input num of layers (including the input and output layer into the count): \n");
+    printf("input num of hidden layers: \n");
     scanf("%d", &numLayers);
 
     vector<int> topology;
+    topology.push_back(784);
+
     for(int i=0; i<numLayers; ++i){
         printf("input num of neurons in layer[%d]: \n", i);
         scanf("%d", &num);
         topology.push_back(num);
     }
+    topology.push_back(10);
+
+    const char *weight_file = "weights.txt";
+    const char *bias_file = "biases.txt";
 
     //training the neural network
-    //NeuralNetwork nn = train(topology);
-
-    //save weights and biases to file
-    /*const char *weight_file = "weights.txt";
-    const char *bias_file = "biases.txt";
-    nn.print(bias_file, weight_file);*/
+    train(topology, bias_file, weight_file);
 
     //testing the neural network
-    test(topology);
+    test(topology, bias_file, weight_file);
 
     return 0;
 }
 
-NeuralNetwork train(vector<int> topology){
+void train(vector<int> topology, const char * bias_file, const char * weight_file){
 
     //creating neural network
     NeuralNetwork nn(topology, 0.1);
 
-    /*const char *weight_file = "weights.txt";
-    const char *bias_file = "biases.txt";
-    nn.print(weight_file, bias_file);*/
-    
-    //dataset
-    //string test = argv[1];
-    //string test = "/home/koshek/Desktop/MS/zadaci/zad1/test/test_";
-    //string train = argv[2];
-    
     string train;
     int epoch = 100000;
     //0 1 2 3 4 5 6 7 8 9
@@ -89,40 +81,33 @@ NeuralNetwork train(vector<int> topology){
         }
         fclose(fp);
 
-
         //cout << "FEED FORWARD" << endl;
         nn.feedForword(targetInput);
-
         //cout << "BACK PROPAGATE " << endl;
         nn.backPropagate(targetOutput);
-
-
     }
-
     cout << "training complete\n";
-
-    return nn;
+    
+    nn.print(bias_file, weight_file);
 }
 
-void test(vector<int> topology){
+void test(vector<int> topology, const char * bias_file, const char * weight_file){
 
-    const char *weight_file = "weights.txt";
-    const char *bias_file = "biases.txt";
     NeuralNetwork nn(topology, 0.1, bias_file, weight_file);
 
     vector<float> targetOutput(10);
     //MNIST dataset pictures are 28x28
     vector<float> targetInput(784);
     int temp;
-    string train;
+    string test;
 
     int correct_guess = 0;
 
     for(int index = 0; index < 10000; ++index){
-        train = "/home/koshek/Desktop/MS/zadaci/zad1/test/test_";
-        train.append(to_string(index));
-        train.append(".txt");
-        const char * ctest = train.c_str();
+        test = "/home/koshek/Desktop/MS/zadaci/zad1/test/test_";
+        test.append(to_string(index));
+        test.append(".txt");
+        const char * ctest = test.c_str();
         
         FILE *fp = fopen(ctest, "r");
         assert(fp != NULL);
@@ -141,7 +126,7 @@ void test(vector<int> topology){
 
         nn.feedForword(targetInput);
         vector<float> preds = nn.getPredictions();
-        
+
         int trained_label = findLabelOutput(preds);
         int actual_label = findLabel(targetOutput);
 

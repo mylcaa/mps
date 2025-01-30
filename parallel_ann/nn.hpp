@@ -1,7 +1,14 @@
+#ifndef NN_HPP
+#define NN_HPP
+
 #include <iostream>
 #include <vector>
 #include <math.h>
 #include "matrix.hpp"
+#include <random>
+
+// Initialize a random number generator
+extern random_device rd; // Seed
 
 using namespace std;
 
@@ -40,3 +47,5 @@ inline float ReLU(float val){
 inline float DReLU(float val){
     return ((val <= 0)? 0 : 1);
 }
+
+#endif

@@ -1,7 +1,5 @@
 #include "nn.hpp"
-#include <random>
 
-// Initialize a random number generator
 random_device rd; // Seed
 mt19937 gen(rd()); // Mersenne Twister generator
 uniform_real_distribution<float> dis(0.0, 1.0);
@@ -79,56 +77,36 @@ bool NeuralNetwork::feedForword(vector<float> input){
 
     //transform input from vector to matrix
     Matrix<float> neuronMatrix(input.size(), 1);
+
     for(int i=0; i<input.size(); ++i){
         neuronMatrix._vals[i] = input[i];
     }
 
     Matrix<float> UnactivatedMatrix = neuronMatrix;
 
-    /*cout << "input:" << endl;
-    neuronMatrix.print();*/
-
     for(int i=0; i < _weightMatrix.size(); ++i){
         _neuronMatrix.at(i) = neuronMatrix;
         _unactivatedMatrix.at(i) = UnactivatedMatrix;
        
         //z = W*a + b
-        
         UnactivatedMatrix = neuronMatrix.multiply(_weightMatrix[i]);
-
-        /*cout << "W*a: " << i << endl;
-        UnactivatedMatrix.print();*/
-
         UnactivatedMatrix = UnactivatedMatrix.add(_biasMatrix[i]);
-
-        /*cout << "W*a + b : " << i << endl;
-        UnactivatedMatrix.print();*/
 
         //a' = activation_function(z)
         if(i == (_weightMatrix.size() - 1)){
-
-            neuronMatrix = UnactivatedMatrix.Softmax();
             
-            /*cout << "output:" << endl;
-            neuronMatrix.print();*/
-        }
-        else{
-            //cout << "neuronMatrix: " << neuronMatrix._rows << " " << neuronMatrix._cols << endl;
-            //cout << "_weightMatrix[i]: " << i << " " << _weightMatrix[i]._rows << " " << _weightMatrix[i]._cols << endl;
+            neuronMatrix = UnactivatedMatrix.Softmax();
+        
+        }else{       
             neuronMatrix = UnactivatedMatrix.applyFunction(ReLU);
 
-            /*cout << "layer:" << endl;
-            neuronMatrix.print();*/
+            //normalise layers
+            float max = neuronMatrix.max();
+            //cout << "max: " << max << endl;
+            if(max > 1)
+                neuronMatrix = neuronMatrix.multiplyScaler(1/max);
         }
 
-        //normalise layers
-        float max = neuronMatrix.max();
-        //cout << "max: " << max << endl;
-        if(max > 1)
-            neuronMatrix = neuronMatrix.multiplyScaler(1/max);
-
-        /*cout << "layer norm: " << i << endl;
-        neuronMatrix.print();*/
     }
     
     _neuronMatrix.at(_weightMatrix.size()) = neuronMatrix;
@@ -163,35 +141,13 @@ bool NeuralNetwork::backPropagate(vector<float> targetOutput){
         Matrix<float> weightMatrix = _weightMatrix[i].transpose();
         Matrix<float> prevErrors = errors.multiply(weightMatrix);
         Matrix<float> dOutputs = _unactivatedMatrix[i].applyFunction(DReLU);
-        
-        //cout << "dOutputs: " << dOutputs._rows << " " << dOutputs._cols << endl;
 
         prevErrors = prevErrors.multiplyElements(dOutputs);
-
-        //calculating gradient i.e. delta weight (dw)
-        //dw[i] = -lr * dC/dw = -lr * A[i-1].transpose()*error
 
         Matrix<float> gradients = errors.multiplyScaler(_learningRate);
         Matrix<float> weightGradients = _neuronMatrix[i].transpose().multiply(gradients);
 
-        //adjusting bias and weight
-
-        /*cout << "bias: " << i << endl;
-        _biasMatrix[i].print();
-
-        cout << "bias gradient:" << endl;
-        gradients.print();*/
-
         _biasMatrix[i] = _biasMatrix[i].addLimited(gradients);
-
-        /*cout << "changed bias: " << i << endl;
-        _biasMatrix[i].print();
-
-        cout << "weights: " << i << endl;
-        _weightMatrix[i].print();*/
-
-        /*cout << "weight gradient:" << endl;
-        weightGradients.print();*/
 
         _weightMatrix[i] = _weightMatrix[i].addLimited(weightGradients);
         errors = prevErrors;
@@ -209,14 +165,14 @@ void NeuralNetwork::print(const char *bias_file, const char *weight_file)
     FILE *fp = fopen(bias_file, "w");
 
     for(int i = 0; i < _biasMatrix.size(); ++i){
-        fprintf(fp, "-> \n");
+        //fprintf(fp, "-> \n");
         for (int y = 0; y < this->_biasMatrix[i]._rows; y++){
             for (int x = 0; x < this->_biasMatrix[i]._cols; x++){
                 fprintf(fp, "%f ", this->_biasMatrix[i].at(x, y));
-                printf("%f ", this->_biasMatrix[i].at(x, y));
+                //printf("%f ", this->_biasMatrix[i].at(x, y));
             }
             fprintf(fp, "\n");
-            printf("\n");
+            //printf("\n");
         }
     }
     fclose(fp);
@@ -224,14 +180,14 @@ void NeuralNetwork::print(const char *bias_file, const char *weight_file)
     fp = fopen(weight_file, "w");
 
     for(int i = 0; i < _weightMatrix.size(); ++i){
-        fprintf(fp, "-> \n");
+        //fprintf(fp, "-> \n");
         for (int y = 0; y < this->_weightMatrix[i]._rows; y++){
             for (int x = 0; x < this->_weightMatrix[i]._cols; x++){
                 fprintf(fp, "%f ", this->_weightMatrix[i].at(x, y));
-                printf("%f ", this->_weightMatrix[i].at(x, y));
+                //printf("%f ", this->_weightMatrix[i].at(x, y));
             }
             fprintf(fp, "\n");
-            printf("\n");
+            //printf("\n");
         }
     }
     fclose(fp);
